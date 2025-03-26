@@ -1,20 +1,22 @@
 use std::sync::Mutex;
 use core_graphics::event::CGEventType;
 use core_graphics::geometry::CGPoint;
-use macos::pasteboard_utils::get_drag_pasteboard_types;
+use macos::pasteboard_utils::get_drag_pasteboard_data;
+use model::drag_types::DragData;
 
 mod shake_detector;
 mod drag_state;
 mod macos;
+pub mod model;
 
 use crate::macos::mouse_listener;
 use drag_state::DragState;
 use std::sync::LazyLock;
 
 /// 当拖拽粘贴板内容变化时的回调类型，参数为粘贴板类型列表
-pub type PasteboardChangedCallback = Box<dyn Fn(Vec<String>) + Send + Sync + 'static>;
+pub type PasteboardChangedCallback = Box<dyn Fn(Option<DragData>) + Send + Sync + 'static>;
 /// 当检测到鼠标摇动时的回调类型
-pub type MouseShakeCallback = Box<dyn Fn() + Send + Sync + 'static>;
+pub type MouseShakeCallback = Box<dyn Fn(Option<DragData>) + Send + Sync + 'static>;
 
 /// 内部状态，保存拖拽过程中的数据
 static STATE: LazyLock<Mutex<DragState>> = LazyLock::new(|| Mutex::new(DragState::new()));
@@ -54,16 +56,17 @@ fn callback(event_type: CGEventType, location: CGPoint) {
 
             // 检查拖拽时粘贴板是否有变化
             if state.check_pasteboard_change() {
-                let types = get_drag_pasteboard_types();
+                let data = get_drag_pasteboard_data();
                 if let Some(ref cb) = *PASTEBOARD_CALLBACK.lock().unwrap() {
-                    cb(types);
+                    cb(data);
                 }
             }
 
             // 检查是否检测到摇动且当前拖拽中还未处理
             if state.is_shaking() && !state.is_shake_detected_in_current_drag() {
+                let data = get_drag_pasteboard_data();
                 if let Some(ref cb) = *SHAKE_CALLBACK.lock().unwrap() {
-                    cb();
+                    cb(data);
                 }
                 state.set_shake_detected_in_current_drag(true);
             }
