@@ -4,12 +4,17 @@
 use core_graphics::event::{CGEvent, CGEventTapLocation, CGEventType};
 use core_graphics::geometry::CGPoint;
 use std::os::raw::c_void;
+use std::sync::Mutex;
 use cocoa::base::id;
+use crate::LazyLock;
 
 // 定义回调类型
 pub type MouseEventCallback = fn(CGEventType, CGPoint);
 
 // 事件处理回调函数
+static CURRENT_MOUSE_LOCATION: LazyLock<Mutex<CGPoint>> = LazyLock::new(|| Mutex::new(CGPoint { x: 0.0, y: 0.0 }));
+
+// 在事件回调中添加坐标更新
 unsafe extern "C" fn event_callback(
     _proxy: id,
     event_type: CGEventType,
@@ -26,7 +31,20 @@ unsafe extern "C" fn event_callback(
     };
     let location = cg_event.location();
     callback(event_type, location);
+    
+    {
+        let mut loc = CURRENT_MOUSE_LOCATION.lock().unwrap();
+        loc.x = location.x;
+        loc.y = location.y;
+    }
+    
     cg_event
+}
+
+// 新增公共接口函数
+pub fn get_current_mouse_location() -> CGPoint {
+    let loc = CURRENT_MOUSE_LOCATION.lock().unwrap();
+    CGPoint { x: loc.x, y: loc.y }
 }
 
 // 开始监听鼠标事件

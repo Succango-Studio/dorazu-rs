@@ -76,3 +76,9 @@ fn callback(event_type: CGEventType, location: CGPoint) {
 pub fn start_listening() {
     mouse_listener::start_listening(callback);
 }
+
+/// 获取鼠标当前位置
+pub fn get_current_mouse_location() -> (f64, f64) {
+    let point = mouse_listener::get_current_mouse_location();
+    (point.x, point.y)
+}
