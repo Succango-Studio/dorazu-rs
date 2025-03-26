@@ -1,0 +1,15 @@
+[package]
+name = "dorazu-rs"
+version = "0.1.0"
+edition = "2024"
+
+[lib]
+name = "dorazu_rs"
+crate-type = ["lib"]
+
+[target.'cfg(target_os = "macos")'.dependencies]
+objc = "0.2.7"
+objc-foundation = "0.1.1"
+block = "0.1.6"
+core-graphics = "0.24.0"
+cocoa = "0.26.0"
