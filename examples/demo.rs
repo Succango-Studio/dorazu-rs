@@ -28,6 +28,11 @@ fn main() {
         println!("检测到鼠标摇动!");
     }));
 
+    // 设置拖拽结束回调
+    dorazu_rs::set_drag_end_callback(Box::new(|data| {
+        println!("拖拽结束，数据：{:?}", data);
+    }));
+
     // 开始监听鼠标事件
     start_listening();
 }

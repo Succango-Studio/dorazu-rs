@@ -38,14 +38,36 @@ pub fn set_mouse_shake_callback(cb: MouseShakeCallback) {
     *callback = Some(cb);
 }
 
+/// 设置拖拽结束回调函数
+pub fn set_drag_end_callback(cb: DragEndCallback) {
+    let mut callback = DRAG_END_CALLBACK.lock().unwrap();
+    *callback = Some(cb);
+}
+
 /// 内部回调，由鼠标监听模块调用，根据事件类型和位置进行处理
+/// 当拖拽结束时的回调类型
+pub type DragEndCallback = Box<dyn Fn(Option<DragData>) + Send + Sync + 'static>;
+
+/// 拖拽结束回调
+static DRAG_END_CALLBACK: LazyLock<Mutex<Option<DragEndCallback>>> =
+    LazyLock::new(|| Mutex::new(None));
+
 fn callback(event_type: CGEventType, location: CGPoint) {
     let mut state = STATE.lock().unwrap();
 
     match event_type {
         CGEventType::LeftMouseDown => {
-            // 重置状态
             state.reset();
+        }
+        CGEventType::LeftMouseUp => {
+            if state.has_dragging() {
+                let data = get_drag_pasteboard_data();
+                if let Some(ref cb) = *DRAG_END_CALLBACK.lock().unwrap() {
+                    cb(data);
+                }
+                // 重置拖拽状态
+                state.reset();
+            }
         }
         CGEventType::LeftMouseDragged => {
             let x = location.x;
@@ -55,6 +77,8 @@ fn callback(event_type: CGEventType, location: CGPoint) {
 
             // 检查拖拽时粘贴板是否有变化
             if state.check_pasteboard_change() {
+                // 标记拖拽已开始
+                state.mark_dragging_started();
                 let data = get_drag_pasteboard_data();
                 if let Some(ref cb) = *PASTEBOARD_CALLBACK.lock().unwrap() {
                     cb(data);

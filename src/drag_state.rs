@@ -3,10 +3,9 @@ use crate::macos::pasteboard_utils::get_drag_pasteboard_change_count;
 
 pub struct DragState {
     initial_change_count: i64,
-    // 粘贴板是否已变化，只有变化后才开始检测摇动
     pasteboard_changed: bool,
-    // 摇动检测器
     shake_detector: ShakeDetector,
+    dragging_started: bool,
 }
 
 impl DragState {
@@ -15,20 +14,32 @@ impl DragState {
             initial_change_count: 0,
             pasteboard_changed: false,
             shake_detector: ShakeDetector::new(),
+            dragging_started: false,  // 新增初始化
         }
+    }
+    
+    // 新增拖拽开始标记方法
+    pub fn mark_dragging_started(&mut self) {
+        self.dragging_started = true;
+    }
+    
+    // 新增状态检查方法
+    pub fn has_dragging(&self) -> bool {
+        self.dragging_started
+    }
+    
+    // 修改重置方法
+    pub fn reset(&mut self) {
+        self.initial_change_count = get_drag_pasteboard_change_count();
+        self.pasteboard_changed = false;
+        self.dragging_started = false;
+        self.shake_detector.reset();
     }
     
     // 添加鼠标位置并检测摇动
     pub fn add_position(&mut self, x: f64, y: f64) {
         // 添加鼠标位置并检测摇动
         self.shake_detector.add_position(x, y);
-    }
-    
-    // 重置状态
-    pub fn reset(&mut self) {
-        self.initial_change_count = get_drag_pasteboard_change_count();
-        self.pasteboard_changed = false;
-        self.shake_detector.reset();
     }
     
     // 检查粘贴板变化

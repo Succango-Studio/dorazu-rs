@@ -50,9 +50,9 @@ pub fn get_current_mouse_location() -> CGPoint {
 // 开始监听鼠标事件
 pub fn start_listening(callback: MouseEventCallback) {
     unsafe {
-        // 定义要监听的事件类型
         let event_mask = (1 << CGEventType::LeftMouseDown as u64)
-            | (1 << CGEventType::LeftMouseDragged as u64);
+            | (1 << CGEventType::LeftMouseDragged as u64)
+            | (1 << CGEventType::LeftMouseUp as u64);
 
         // 创建事件监听
         let tap = CGEventTapCreate(
