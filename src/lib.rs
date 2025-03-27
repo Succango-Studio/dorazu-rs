@@ -1,7 +1,6 @@
 use std::sync::Mutex;
 use core_graphics::event::CGEventType;
 use core_graphics::geometry::CGPoint;
-use macos::pasteboard_utils::get_drag_pasteboard_data;
 use model::drag_types::DragData;
 
 mod shake_detector;
@@ -84,4 +83,9 @@ pub fn start_listening() {
 pub fn get_current_mouse_location() -> (f64, f64) {
     let point = mouse_listener::get_current_mouse_location();
     (point.x, point.y)
+}
+
+/// 获取当前拖拽粘贴板内容
+pub fn get_drag_pasteboard_data() -> Option<DragData> {
+    macos::pasteboard_utils::get_drag_pasteboard_data()
 }
